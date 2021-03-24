@@ -145,6 +145,8 @@ async def on_member_update(before,after):
     channel = bot.get_channel(820761843508838417)
     await channel.send(before)
     await channel.send(after)'''
+#before.status, nickname etc...
+
     
 @bot.event
 async def on_message(message):
@@ -168,6 +170,35 @@ async def InfoServeur(ctx):
     message = f"Le serveur **{nom_serveur}** contient *{nombre_membres}* personnes. \nLa description du serveur est {description_serv}. \nCe serveur possède {salons_textes} salons textuels et {salons_voc} salons vocaux."
     await ctx.send(message)
 
+'''@bot.command()
+async def Janken(ctx):
+    await ctx.send("Pierre, Feuille ou Ciseaux")
+    liste=["Pierre", "Feuille", "Ciseaux"]
+    bot=choice(liste)
+    @bot.command()
+    async def Pierre(ctx):
+        if bot == "Feuille":
+            await ctx.send("J'ai gagné")
+        elif bot == "Ciseaux":
+            await ctx.send("J'ai perdu, bien joué. Une revanche ?")
+        else:
+            await ctx.send("Tss, égalité, encore")
+    @bot.command()
+    async def Feuille(ctx):
+        if bot == "Pierre":
+            await ctx.send("J'ai perdu, bien joué. Une revanche ?")
+        elif bot == "Ciseaux":
+            await ctx.send("J'ai gagné")
+        else:
+            await ctx.send("Tss, égalité, encore")
+    @bot.command()
+    async def Ciseaux(ctx):
+        if bot == "Pierre":
+            await ctx.send("J'ai gagné")
+        elif bot == "Feuille":
+            await ctx.send("J'ai perdu, bien joué. Une revanche ?")
+        else:
+            await ctx.send("Tss, égalité, encore") '''
 
 @bot.command()
 async def Pierre(ctx):
@@ -257,6 +288,8 @@ async def create_channel_v(ctx, channel_name='hasard'):
 async def choose(ctx, *choices: str):
     """Faire un choix facilement."""
     await ctx.send(random.choice(choices))
+
+
 
 
 
