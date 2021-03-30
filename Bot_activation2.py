@@ -140,20 +140,50 @@ async def on_member_join(member):
     await member.dm_channel.send(f'Salut {member.name}, je te souhaite la bienvenue sur le serveur !')
     await member.dm_channel.send("https://i.pinimg.com/originals/31/e6/92/31e692bb314ef309603f83c4be7c803b.jpg")
 
-'''@bot.event
+@bot.event
 async def on_member_update(before,after):
     channel = bot.get_channel(820761843508838417)
-    await channel.send(before)
-    await channel.send(after)'''
-#before.status, nickname etc...
+    if before.status != after.status:
+        message = f"L'utilisateur **{before}** a changé son statut de {before.status} en {after.status}"
+        await channel.send(message) 
+    if before.nickname != after.nickname:
+        message = f"L'utilisateur **{before}** a changé son surnom de {before.nickname} en {after.nickname}"
+        await channel.send(message)
+    if before.activity != after.activity:
+        message = f"L'utilisateur **{before}** est passé de l'activité {before.activity} à l'activité {after.activity}"
+        await channel.send(message)
 
-    
 @bot.event
+async def on_user_update(before,after):
+    channel = bot.get_channel (820761843508838417)
+    if before.avatar != after.avatar:
+        message = f"L'utilisateur **{before}** a changé son avatar de {before.avatar} en {after.avatar}"
+        await channel.send(message) 
+    if before.username != after.username:
+        message = f"L'utilisateur **{before}** a changé son pseudo de {before.username} en {after.username}"
+        await channel.send(message)
+    if before.discriminator != after.discriminator:
+        message = f"L'utilisateur **{before}** a changé son # de {before.discriminator} en {after.discriminator}"
+        await channel.send(message)
+   
+@bot.event
+async def on_message_delete(message):
+    channel = bot.get_channel (820761843508838417)
+    await channel.send(f"Le message de {message.author} a été supprimé \n> {message.content}")
+
+@bot.event
+async def on_message_edit(before, after):
+    channel = bot.get_channel (820761843508838417)
+    await channel.send(f"{before.author} a édité son message :\nAvant -> {before.content}\nAprès -> {after.content}")
+    
+
+
+'''@bot.event
 async def on_message(message):
     if message.author != bot.user:
         if "dis" in message.content.lower():
             await message.channel.send(message.content.lower())
-    await bot.process_commands(message)
+    await bot.process_commands(message)'''
 
 @bot.command()
 async def NARUTO(ctx):
@@ -289,6 +319,84 @@ async def choose(ctx, *choices: str):
     """Faire un choix facilement."""
     await ctx.send(random.choice(choices))
 
+
+@bot.command()
+async def say(ctx, *texte):
+    await ctx.send(" ".join(texte))
+
+@bot.command()
+async def chinese(ctx, *texte):
+	chineseChar = "丹书匚刀巳下呂廾工丿片乚爪冂口尸Q尺丂丁凵V山乂Y乙"
+	chineseText = []
+	for word in texte:
+		for char in word:
+			if char.isalpha():
+				index = ord(char) - ord("a")
+				transformed = chineseChar[index]
+				chineseText.append(transformed)
+			else:
+				chineseText.append(char)
+		chineseText.append(" ")
+	await ctx.send("".join(chineseText))
+
+@bot.command()
+@commands.has_permissions(kick_members = True)
+async def kick(ctx, user : discord.User, *reason):
+    reason = " ".join(reason)
+    await ctx.guild.kick(user, reason = reason)
+    await ctx.send(f"{user} a été kick.")
+
+
+@bot.command()
+@commands.has_permissions(ban_members = True)
+async def ban(ctx, user : discord.User, *reason):
+	reason = " ".join(reason)
+	await ctx.guild.ban(user, reason = reason)
+	await ctx.send(f"{user} à été ban pour la raison suivante : {reason}.")
+
+@bot.command()
+async def unban(ctx, user, *reason):
+	reason = " ".join(reason)
+	userName, userId = user.split("#")
+	bannedUsers = await ctx.guild.bans()
+	for i in bannedUsers:
+		if i.user.name == userName and i.user.discriminator == userId:
+			await ctx.guild.unban(i.user, reason = reason)
+			await ctx.send(f"{user} à été unban.")
+			return
+	await ctx.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
+
+
+async def createMutedRole(ctx):
+    mutedRole = await ctx.guild.create_role(name = "Muted",
+                                            permissions = discord.Permissions(
+                                                send_messages = False,
+                                                speak = False),
+                                            reason = "Creation du role Muted pour mute des gens.")
+    for channel in ctx.guild.channels:
+        await channel.set_permissions(mutedRole, send_messages = False, speak = False)
+    return mutedRole
+
+@bot.command()
+async def getMutedRole(ctx):
+    roles = ctx.guild.roles
+    for role in roles:
+        if role.name == "Muted":
+            return role
+    
+    return await createMutedRole(ctx)
+
+@bot.command()
+async def mute(ctx, member : discord.Member, *, reason = "Aucune raison n'a été renseigné"):
+    mutedRole = await getMutedRole(ctx)
+    await member.add_roles(mutedRole, reason = reason)
+    await ctx.send(f"{member.mention} a été mute !")
+
+@bot.command()
+async def unmute(ctx, member : discord.Member, *, reason = "Aucune raison n'a été renseigné"):
+    mutedRole = await getMutedRole(ctx)
+    await member.remove_roles(mutedRole, reason = reason)
+    await ctx.send(f"{member.mention} a été unmute !")
 
 
 
