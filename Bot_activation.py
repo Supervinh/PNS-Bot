@@ -1,9 +1,12 @@
-from random import *
+import random
 import discord
 from discord.ext import commands
 import youtube_dl
 import asyncio
 import ffmpeg
+from urllib import parse, request
+from requests import get
+import json
 
 youtube_dl.utils.bug_reports_message = lambda: ''
 
@@ -11,7 +14,7 @@ ytdl_format_options = {
     'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
-    'noplaylist': True,
+    'noplaylist': False,
     'nocheckcertificate': True,
     'ignoreerrors': False,
     'logtostderr': False,
@@ -25,99 +28,79 @@ ffmpeg_options = {'options': '-vn'}
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
-class YTDLSource(discord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume=0.5):
-        super().__init__(source, volume)
-
-        self.data = data
-
-        self.title = data.get('title')
-        self.url = data.get('url')
-
-    @classmethod
-    async def from_url(cls, url, *, loop=None, stream=False):
-        loop = loop or asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
-
-        if 'entries' in data:
-            data = data['entries'][0]
-
-        filename = data['url'] if stream else ytdl.prepare_filename(data)
-        return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
+musics = {}
 
 
-class Music(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    @commands.command()
-    async def join(self, ctx, *, channel: discord.VoiceChannel):
-        """Joins a voice channel"""
-
-        if ctx.voice_client is not None:
-            return await ctx.voice_client.move_to(channel)
-
-        await channel.connect()
-
-    @commands.command()
-    async def play(self, ctx, *, query):
-        """Plays a file from the local filesystem"""
-
-        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(query))
-        ctx.voice_client.play(source, after=lambda e: print('Player error: %s' % e) if e else None)
-
-        await ctx.send('Now playing: {}'.format(query))
-
-    @commands.command()
-    async def yt(self, ctx, *, url):
-        """Plays from a url (almost anything youtube_dl supports)"""
-
-        async with ctx.typing():
-            player = await YTDLSource.from_url(url, loop=self.bot.loop)
-            ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
-
-        await ctx.send('Now playing: {}'.format(player.title))
-
-    @commands.command()
-    async def stream(self, ctx, *, url):
-        """Streams from a url (same as yt, but doesn't predownload)"""
-
-        async with ctx.typing():
-            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
-            ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
-
-        await ctx.send('Now playing: {}'.format(player.title))
-
-    @commands.command()
-    async def volume(self, ctx, volume: int):
-        """Changes the player's volume"""
-
-        if ctx.voice_client is None:
-            return await ctx.send("Not connected to a voice channel.")
-
-        ctx.voice_client.source.volume = volume / 100
-        await ctx.send("Changed volume to {}%".format(volume))
-
-    @commands.command()
-    async def stop(self, ctx):
-        """Stops and disconnects the bot from voice"""
-
-        await ctx.voice_client.disconnect()
-
-    @play.before_invoke
-    @yt.before_invoke
-    @stream.before_invoke
-    async def ensure_voice(self, ctx):
-        if ctx.voice_client is None:
-            if ctx.author.voice:
-                await ctx.author.voice.channel.connect()
-            else:
-                await ctx.send("You are not connected to a voice channel.")
-                raise commands.CommandError("Author not connected to a voice channel.")
-        elif ctx.voice_client.is_playing():
-            ctx.voice_client.stop()
+class Video:
+    def __init__(self, link):
+        try :
+            get(link)
+        except:
+            video = ytdl.extract_info(f"ytsearch:{link}", download=False)["entries"][0]
+            self.url = video["webpage_url"]
+            self.stream_url = video["url"]
+        else:
+            video = ytdl.extract_info(link, download=False)
+            self.url = video["webpage_url"]
+            self.stream_url = video["url"]
 
 
+'''class Role(discord.Client):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.role_message_id = 829094653985947678 # ID of the message that can be reacted to to add/remove a role.
+        self.emoji_to_role = {
+            discord.PartialEmoji(name=':joy:'): 829095137481195590, # ID of the role associated with unicode emoji '🔴'.
+            discord.PartialEmoji(name=':slight_smile:'): 829095142010257479, 
+               }  
+
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        """Gives a role based on a reaction emoji."""
+        if payload.message_id != self.role_message_id:
+            return
+
+        guild = self.get_guild(payload.guild_id)
+        if guild is None:
+            return
+
+        try:
+            role_id = self.emoji_to_role[payload.emoji]
+        except KeyError:
+            return
+
+        role = guild.get_role(role_id)
+        if role is None:
+            return
+
+        try:
+            await payload.member.add_roles(role)
+   
+
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        """Removes a role based on a reaction emoji."""
+        if payload.message_id != self.role_message_id:
+            return
+
+        guild = self.get_guild(payload.guild_id)
+        if guild is None:
+            return
+
+        try:
+            role_id = self.emoji_to_role[payload.emoji]
+        except KeyError:
+            return
+
+        role = guild.get_role(role_id)
+        if role is None:
+            return
+
+        member = guild.get_member(payload.user_id)
+        if member is None:
+            return
+
+        try:
+            await member.remove_roles(role)'''
 
 
 intents = discord.Intents.default()
@@ -127,7 +110,86 @@ intents.reactions = True
 
 bot = commands.Bot(command_prefix = commands.when_mentioned, description = "Le meilleur bot", intents=intents)
 
-bot.add_cog(Music(bot))
+
+@bot.command()
+async def stop(ctx):
+    client = ctx.guild.voice_client
+    await client.disconnect()
+    musics[ctx.guild] = []
+
+@bot.command()
+async def resume(ctx):
+    client = ctx.guild.voice_client
+    if client.is_paused():
+        client.resume()
+
+
+@bot.command()
+async def pause(ctx):
+    client = ctx.guild.voice_client
+    if not client.is_paused():
+        client.pause()
+
+
+@bot.command()
+async def skip(ctx):
+    client = ctx.guild.voice_client
+    client.stop()
+
+
+def play_song(client, queue, song):
+    source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(song.stream_url
+        , before_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"))
+
+    def next(_):
+        if len(queue) > 0:
+            new_song = queue[0]
+            del queue[0]
+            play_song(client, queue, new_song)
+        else:
+            asyncio.run_coroutine_threadsafe(client.disconnect(), bot.loop)
+
+    client.play(source, after=next)
+
+
+@bot.command()
+async def play(ctx, url):
+    print("play")
+    client = ctx.guild.voice_client
+
+    if client and client.channel:
+        video = Video(url)
+        musics[ctx.guild].append(video)
+    else:
+        channel = ctx.author.voice.channel
+        video = Video(url)
+        musics[ctx.guild] = []
+        client = await channel.connect()
+        await ctx.send(f"Je lance : {video.url}")
+        play_song(client, musics[ctx.guild], video)
+
+
+'''async def ensure_voice(self, ctx):
+    if ctx.voice_client is None:
+        if ctx.author.voice:
+            await ctx.author.voice.channel.connect()
+        else:
+            await ctx.send("You are not connected to a voice channel.")
+            raise commands.CommandError("Author not connected to a voice channel.")
+    elif ctx.voice_client.is_playing():
+        ctx.voice_client.stop()'''
+
+
+@bot.event
+async def on_command_error(ctx, error):
+	if isinstance(error, commands.CommandNotFound):
+		await ctx.send("J'ai bien l'impression que cette commande n'existe pas :/")
+	if isinstance(error, commands.MissingRequiredArgument):
+		await ctx.send("Il manque un argument.")
+	elif isinstance(error, commands.MissingPermissions):
+		await ctx.send("Vous n'avez pas les permissions pour faire cette commande.")
+	elif isinstance(error, commands.CheckFailure):
+		await ctx.send("Oups vous ne pouvez iutilisez cette commande.")
 
 @bot.event
 async def on_ready():
@@ -146,12 +208,13 @@ async def on_member_update(before,after):
     if before.status != after.status:
         message = f"L'utilisateur **{before}** a changé son statut de {before.status} en {after.status}"
         await channel.send(message) 
-    if before.nickname != after.nickname:
-        message = f"L'utilisateur **{before}** a changé son surnom de {before.nickname} en {after.nickname}"
+    if before.nick != after.nick:
+        message = f"L'utilisateur **{before}** a changé son surnom de {before.nick} en {after.nick}"
         await channel.send(message)
     if before.activity != after.activity:
         message = f"L'utilisateur **{before}** est passé de l'activité {before.activity} à l'activité {after.activity}"
         await channel.send(message)
+
 
 @bot.event
 async def on_user_update(before,after):
@@ -165,7 +228,8 @@ async def on_user_update(before,after):
     if before.discriminator != after.discriminator:
         message = f"L'utilisateur **{before}** a changé son # de {before.discriminator} en {after.discriminator}"
         await channel.send(message)
-   
+
+
 @bot.event
 async def on_message_delete(message):
     channel = bot.get_channel (820761843508838417)
@@ -176,14 +240,6 @@ async def on_message_edit(before, after):
     channel = bot.get_channel (820761843508838417)
     await channel.send(f"{before.author} a édité son message :\nAvant -> {before.content}\nAprès -> {after.content}")
     
-
-
-'''@bot.event
-async def on_message(message):
-    if message.author != bot.user:
-        if "dis" in message.content.lower():
-            await message.channel.send(message.content.lower())
-    await bot.process_commands(message)'''
 
 @bot.command()
 async def NARUTO(ctx):
@@ -285,6 +341,7 @@ async def userinfo_error(ctx: commands.Context, error: commands.CommandError):
         return await ctx.send('Impossible de trouver cet utilisateur.')
 
 @bot.command(name="del")
+@commands.has_permissions(manage_messages=True)
 async def delete(ctx, number: int):
     """Efface le nombre de messages souhaité"""
     messages = await ctx.channel.history(limit=number + 1).flatten()
@@ -319,10 +376,10 @@ async def choose(ctx, *choices: str):
     """Faire un choix facilement."""
     await ctx.send(random.choice(choices))
 
-
 @bot.command()
 async def say(ctx, *texte):
     await ctx.send(" ".join(texte))
+    
 
 @bot.command()
 async def chinese(ctx, *texte):
@@ -355,6 +412,7 @@ async def ban(ctx, user : discord.User, *reason):
 	await ctx.send(f"{user} à été ban pour la raison suivante : {reason}.")
 
 @bot.command()
+@commands.has_role('admin')
 async def unban(ctx, user, *reason):
 	reason = " ".join(reason)
 	userName, userId = user.split("#")
@@ -366,7 +424,8 @@ async def unban(ctx, user, *reason):
 			return
 	await ctx.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
 
-
+@bot.command()
+@commands.has_role('admin')
 async def createMutedRole(ctx):
     mutedRole = await ctx.guild.create_role(name = "Muted",
                                             permissions = discord.Permissions(
@@ -378,6 +437,7 @@ async def createMutedRole(ctx):
     return mutedRole
 
 @bot.command()
+@commands.has_role('admin')
 async def getMutedRole(ctx):
     roles = ctx.guild.roles
     for role in roles:
@@ -387,21 +447,50 @@ async def getMutedRole(ctx):
     return await createMutedRole(ctx)
 
 @bot.command()
+@commands.has_role('admin')
 async def mute(ctx, member : discord.Member, *, reason = "Aucune raison n'a été renseigné"):
     mutedRole = await getMutedRole(ctx)
     await member.add_roles(mutedRole, reason = reason)
     await ctx.send(f"{member.mention} a été mute !")
 
 @bot.command()
+@commands.has_role('admin')
 async def unmute(ctx, member : discord.Member, *, reason = "Aucune raison n'a été renseigné"):
     mutedRole = await getMutedRole(ctx)
     await member.remove_roles(mutedRole, reason = reason)
     await ctx.send(f"{member.mention} a été unmute !")
 
 
+@bot.command()
+async def get_quote(ctx):
+    response = requests.get("https://zenquotes.io/api/random")
+    json_data = json.loads(response.text)
+    quote = json_data[0]['q'] + " -" + json_data[0]['a']
+    await ctx.send(quote)
+
+@bot.command()
+async def internet(ctx, *, search):
+    query_string = parse.urlencode({'search_query': search})
+    html_content = request.urlopen('https://www.google.com/search?q=' + query_string)
+    search_results = re.findall('https', html_content.read().decode())
+    print(search_results)
+    await ctx.send(search_results[0])
+
+@bot.command()
+async def _8ball(ctx, *, question):
+    reponses = ['Evidemment',
+                "Je suis d'accord",
+                "Ma réponse est non",
+                "Je ne suis pas d'accord",
+                "Pourquoi pas ?",
+                "Je n'ai aucun doute dessus",
+                "Oui",
+                "Je n'ai pas bien compris la question, peux-tu répéter ?",
+                "Mes sources me disent que non"]
+    await ctx.send(f"Question : {question}\nAnswer : {random.choice(reponses)}")
 
 
-
+'''bot.add_cog(Role)'''
 
 bot.run("token")
 
