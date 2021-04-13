@@ -5,11 +5,15 @@ import youtube_dl
 import asyncio
 import ffmpeg
 from urllib import parse, request
-from requests import get
+import requests
 import json
+import re
+
+'''import le fichier bot tout seul pour chaque fichier séparé'''
 
 youtube_dl.utils.bug_reports_message = lambda: ''
 
+'''le format des vidéos que le bot va récupérer sur internet'''
 ytdl_format_options = {
     'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
@@ -32,9 +36,10 @@ musics = {}
 
 
 class Video:
+    '''classe qui va permettre au bot d'aller chercher la vidéo sur youtube'''
     def __init__(self, link):
         try :
-            get(link)
+            requests.get(link)
         except:
             video = ytdl.extract_info(f"ytsearch:{link}", download=False)["entries"][0]
             self.url = video["webpage_url"]
@@ -45,27 +50,30 @@ class Video:
             self.stream_url = video["url"]
 
 
-'''class Role(discord.Client):
-    def __init__(self, *args, **kwargs):
+class Role(commands.Cog):
+    def __init__(self, bot, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.bot = bot
 
-        self.role_message_id = 829094653985947678 # ID of the message that can be reacted to to add/remove a role.
+        self.role_message_id = 829313507974840370 # ID du message auquel réagir afin d'ajouter/retirer un rôle
         self.emoji_to_role = {
-            discord.PartialEmoji(name=':joy:'): 829095137481195590, # ID of the role associated with unicode emoji '🔴'.
-            discord.PartialEmoji(name=':slight_smile:'): 829095142010257479, 
+            '😂': 824258848369541210, #ID du rôle associé à l'émoji
+            '😄': 829095142010257479, 
                }  
 
+    @commands.Cog.listener() 
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        """Gives a role based on a reaction emoji."""
+        """Donne un rôle selon l'émoji utilisé."""
         if payload.message_id != self.role_message_id:
             return
 
-        guild = self.get_guild(payload.guild_id)
+        guild = self.bot.get_guild(payload.guild_id)
         if guild is None:
             return
 
         try:
-            role_id = self.emoji_to_role[payload.emoji]
+            print(payload.emoji.name)
+            role_id = self.emoji_to_role[payload.emoji.name]
         except KeyError:
             return
 
@@ -73,16 +81,15 @@ class Video:
         if role is None:
             return
 
-        try:
-            await payload.member.add_roles(role)
+        await payload.member.add_roles(role)
    
-
+    @commands.Cog.listener() 
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
-        """Removes a role based on a reaction emoji."""
+        """Retire le rôle en lien avec l'émoji."""
         if payload.message_id != self.role_message_id:
             return
 
-        guild = self.get_guild(payload.guild_id)
+        guild = self.bot.get_guild(payload.guild_id)
         if guild is None:
             return
 
@@ -100,8 +107,9 @@ class Video:
             return
 
         try:
-            await member.remove_roles(role)'''
-
+            await member.remove_roles(role)
+        except:
+            pass
 
 intents = discord.Intents.default()
 intents.members = True
@@ -113,12 +121,14 @@ bot = commands.Bot(command_prefix = commands.when_mentioned, description = "Le m
 
 @bot.command()
 async def stop(ctx):
+    """permet d'arrêter la musique et de déconnecter le bot du salon vocal"""
     client = ctx.guild.voice_client
     await client.disconnect()
     musics[ctx.guild] = []
 
 @bot.command()
 async def resume(ctx):
+    """permet de relancer la musique après l'avoir mise en pause"""
     client = ctx.guild.voice_client
     if client.is_paused():
         client.resume()
@@ -126,6 +136,7 @@ async def resume(ctx):
 
 @bot.command()
 async def pause(ctx):
+    """permet de mettre la musique en pause"""
     client = ctx.guild.voice_client
     if not client.is_paused():
         client.pause()
@@ -133,6 +144,7 @@ async def pause(ctx):
 
 @bot.command()
 async def skip(ctx):
+    """permet de passer la musique et d'écouter la suivante"""
     client = ctx.guild.voice_client
     client.stop()
 
@@ -154,6 +166,7 @@ def play_song(client, queue, song):
 
 @bot.command()
 async def play(ctx, url):
+    """fonction permettant au bot de jouer de la musique"""
     print("play")
     client = ctx.guild.voice_client
 
@@ -169,27 +182,17 @@ async def play(ctx, url):
         play_song(client, musics[ctx.guild], video)
 
 
-'''async def ensure_voice(self, ctx):
-    if ctx.voice_client is None:
-        if ctx.author.voice:
-            await ctx.author.voice.channel.connect()
-        else:
-            await ctx.send("You are not connected to a voice channel.")
-            raise commands.CommandError("Author not connected to a voice channel.")
-    elif ctx.voice_client.is_playing():
-        ctx.voice_client.stop()'''
-
-
 @bot.event
 async def on_command_error(ctx, error):
-	if isinstance(error, commands.CommandNotFound):
-		await ctx.send("J'ai bien l'impression que cette commande n'existe pas :/")
-	if isinstance(error, commands.MissingRequiredArgument):
-		await ctx.send("Il manque un argument.")
-	elif isinstance(error, commands.MissingPermissions):
-		await ctx.send("Vous n'avez pas les permissions pour faire cette commande.")
-	elif isinstance(error, commands.CheckFailure):
-		await ctx.send("Oups vous ne pouvez iutilisez cette commande.")
+    """Envoie un message si l'utilisateur se trompe dans les commandes"""
+    if isinstance(error, commands.CommandNotFound):
+	    await ctx.send("J'ai bien l'impression que cette commande n'existe pas :/")
+    if isinstance(error, commands.MissingRequiredArgument):
+	    await ctx.send("Il manque un argument.")
+    elif isinstance(error, commands.MissingPermissions):
+	    await ctx.send("Vous n'avez pas les permissions pour faire cette commande.")
+    elif isinstance(error, commands.CheckFailure):
+	    await ctx.send("Oups vous ne pouvez utilisez cette commande.")
 
 @bot.event
 async def on_ready():
@@ -204,6 +207,7 @@ async def on_member_join(member):
 
 @bot.event
 async def on_member_update(before,after):
+    """Notifie quand un membre agit sur son profil dans le serveur"""
     channel = bot.get_channel(820761843508838417)
     if before.status != after.status:
         message = f"L'utilisateur **{before}** a changé son statut de {before.status} en {after.status}"
@@ -218,6 +222,7 @@ async def on_member_update(before,after):
 
 @bot.event
 async def on_user_update(before,after):
+    """Notifie quand un membre agit sur son profil"""
     channel = bot.get_channel (820761843508838417)
     if before.avatar != after.avatar:
         message = f"L'utilisateur **{before}** a changé son avatar de {before.avatar} en {after.avatar}"
@@ -232,21 +237,25 @@ async def on_user_update(before,after):
 
 @bot.event
 async def on_message_delete(message):
+    """Notifie quand un message est effacé"""
     channel = bot.get_channel (820761843508838417)
     await channel.send(f"Le message de {message.author} a été supprimé \n> {message.content}")
 
 @bot.event
 async def on_message_edit(before, after):
+    """Notifie quand un message est modifié"""
     channel = bot.get_channel (820761843508838417)
     await channel.send(f"{before.author} a édité son message :\nAvant -> {before.content}\nAprès -> {after.content}")
     
 
 @bot.command()
 async def NARUTO(ctx):
+    """commande répondant un mot spécifique à un autre mot spécifique"""
     await ctx.send("SASUKE!!!")
 
 @bot.command()
 async def InfoServeur(ctx):
+    """donne les informations générales du serveur"""
     serveur = ctx.guild
     salons_textes = len(serveur.text_channels)
     salons_voc = len(serveur.voice_channels)
@@ -256,79 +265,47 @@ async def InfoServeur(ctx):
     message = f"Le serveur **{nom_serveur}** contient *{nombre_membres}* personnes. \nLa description du serveur est {description_serv}. \nCe serveur possède {salons_textes} salons textuels et {salons_voc} salons vocaux."
     await ctx.send(message)
 
-'''@bot.command()
-async def Janken(ctx):
-    await ctx.send("Pierre, Feuille ou Ciseaux")
+@bot.command()
+async def Janken(ctx,choix):
+    """Jouer à Pierre, Feuille, Ciseaux contre le bot"""
     liste=["Pierre", "Feuille", "Ciseaux"]
-    bot=choice(liste)
-    @bot.command()
-    async def Pierre(ctx):
+    bot=random.choice(liste)
+    await ctx.send(bot)
+    if choix == 'Pierre':
         if bot == "Feuille":
             await ctx.send("J'ai gagné")
         elif bot == "Ciseaux":
             await ctx.send("J'ai perdu, bien joué. Une revanche ?")
         else:
             await ctx.send("Tss, égalité, encore")
-    @bot.command()
-    async def Feuille(ctx):
+    elif choix == 'Feuille':
         if bot == "Pierre":
             await ctx.send("J'ai perdu, bien joué. Une revanche ?")
         elif bot == "Ciseaux":
             await ctx.send("J'ai gagné")
         else:
             await ctx.send("Tss, égalité, encore")
-    @bot.command()
-    async def Ciseaux(ctx):
+    elif choix == 'Ciseaux':
         if bot == "Pierre":
             await ctx.send("J'ai gagné")
         elif bot == "Feuille":
             await ctx.send("J'ai perdu, bien joué. Une revanche ?")
         else:
-            await ctx.send("Tss, égalité, encore") '''
+            await ctx.send("Tss, égalité, encore")
+    else:
+        await ctx.send("Il faut choisir entre Pierre, Feuille ou Ciseaux")
 
-@bot.command()
-async def Pierre(ctx):
-    liste=["Pierre", "Feuille", "Ciseaux"]
-    bot=choice(liste)
-    await ctx.send(bot)
-    if bot == "Feuille":
-        await ctx.send("J'ai gagné")
-    elif bot == "Ciseaux":
-        await ctx.send("J'ai perdu, bien joué. Une revanche ?")
-    else:
-        await ctx.send("Tss, égalité, encore")
-@bot.command()
-async def Feuille(ctx):
-    liste=["Pierre", "Feuille", "Ciseaux"]
-    bot=choice(liste)
-    await ctx.send(bot)
-    if bot == "Pierre":
-        await ctx.send("J'ai perdu, bien joué. Une revanche ?")
-    elif bot == "Ciseaux":
-        await ctx.send("J'ai gagné")
-    else:
-        await ctx.send("Tss, égalité, encore")
-@bot.command()
-async def Ciseaux(ctx):
-    liste=["Pierre", "Feuille", "Ciseaux"]
-    bot=choice(liste)
-    await ctx.send(bot)
-    if bot == "Pierre":
-        await ctx.send("J'ai gagné")
-    elif bot == "Feuille":
-        await ctx.send("J'ai perdu, bien joué. Une revanche ?")
-    else:
-        await ctx.send("Tss, égalité, encore")
 
 @bot.command()         
 async def secret(ctx):
-    """What is this "secret" you speak of?"""
+    """Quel est ce "secret" dont tu parles?"""
     if ctx.invoked_subcommand is None:
         await ctx.send('||Shh! Les murs nous écoutent||', delete_after=4)
 
 
 @bot.command()
 async def userinfo(ctx: commands.Context, user: discord.User):
+    """permet d'avoir des informations sur un utilisateur"""
     user_id = user.id
     username = user.name
     avatar = user.avatar_url
@@ -337,6 +314,7 @@ async def userinfo(ctx: commands.Context, user: discord.User):
 
 @userinfo.error
 async def userinfo_error(ctx: commands.Context, error: commands.CommandError):
+    """renvoie un message d'erreur si l'utilisateur est introuvable"""
     if isinstance(error, commands.BadArgument):
         return await ctx.send('Impossible de trouver cet utilisateur.')
 
@@ -352,7 +330,7 @@ async def delete(ctx, number: int):
 @bot.command()
 @commands.has_role('admin')
 async def create_channel_t(ctx, channel_name='hasard'):
-    """commencer par créer un rôle 'admin'"""
+    """Avec un rôle 'admin', permet de créer un salon textuel"""
     guild = ctx.guild
     existing_channel = discord.utils.get(guild.channels, name=channel_name)
     if not existing_channel:
@@ -363,7 +341,7 @@ async def create_channel_t(ctx, channel_name='hasard'):
 @bot.command()
 @commands.has_role('admin')
 async def create_channel_v(ctx, channel_name='hasard'):
-    """commencer par créer un rôle 'admin'"""
+    """Avec un rôle 'admin', permet de créer un salon vocal"""
     guild = ctx.guild
     existing_channel = discord.utils.get(guild.channels, name=channel_name)
     if not existing_channel:
@@ -378,55 +356,61 @@ async def choose(ctx, *choices: str):
 
 @bot.command()
 async def say(ctx, *texte):
+    """Fais répéter au bot un message"""
     await ctx.send(" ".join(texte))
     
 
 @bot.command()
 async def chinese(ctx, *texte):
-	chineseChar = "丹书匚刀巳下呂廾工丿片乚爪冂口尸Q尺丂丁凵V山乂Y乙"
-	chineseText = []
-	for word in texte:
-		for char in word:
-			if char.isalpha():
-				index = ord(char) - ord("a")
-				transformed = chineseChar[index]
-				chineseText.append(transformed)
-			else:
-				chineseText.append(char)
-		chineseText.append(" ")
-	await ctx.send("".join(chineseText))
+    """Donne une "traduction en chinois" d'un texte donné par l'utilisateur"""
+    chineseChar = "丹书匚刀巳下呂廾工丿片乚爪冂口尸Q尺丂丁凵V山乂Y乙"
+    chineseText = []
+    for word in texte:
+	    for char in word:
+		    if char.isalpha():
+			    index = ord(char) - ord("a")
+			    transformed = chineseChar[index]
+			    chineseText.append(transformed)
+		    else:
+			    chineseText.append(char)
+	    chineseText.append(" ")
+    await ctx.send("".join(chineseText))
 
 @bot.command()
 @commands.has_permissions(kick_members = True)
 async def kick(ctx, user : discord.User, *reason):
+    """permet de kick un utilisateur si l'on a les permissions pour"""
     reason = " ".join(reason)
     await ctx.guild.kick(user, reason = reason)
-    await ctx.send(f"{user} a été kick.")
+    await ctx.send(f"{user} a été kick pour la raison suivante : {reason}.")
 
 
 @bot.command()
 @commands.has_permissions(ban_members = True)
 async def ban(ctx, user : discord.User, *reason):
-	reason = " ".join(reason)
-	await ctx.guild.ban(user, reason = reason)
-	await ctx.send(f"{user} à été ban pour la raison suivante : {reason}.")
+    """permet de ban un utilisateur si l'on a les permissions pour"""
+    reason = " ".join(reason)
+    await ctx.guild.ban(user, reason = reason)
+    await ctx.send(f"{user} à été ban pour la raison suivante : {reason}.")
 
 @bot.command()
 @commands.has_role('admin')
 async def unban(ctx, user, *reason):
-	reason = " ".join(reason)
-	userName, userId = user.split("#")
-	bannedUsers = await ctx.guild.bans()
-	for i in bannedUsers:
-		if i.user.name == userName and i.user.discriminator == userId:
-			await ctx.guild.unban(i.user, reason = reason)
-			await ctx.send(f"{user} à été unban.")
-			return
-	await ctx.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
+    """permet de unban un utilisateur si l'on a les permissions pour"""
+    reason = " ".join(reason)
+    userName, userId = user.split("#")
+    bannedUsers = await ctx.guild.bans()
+    for i in bannedUsers:
+	    if i.user.name == userName and i.user.discriminator == userId:
+		    await ctx.guild.unban(i.user, reason = reason)
+		    await ctx.send(f"{user} à été unban.")
+		    return
+    await ctx.send(f"L'utilisateur {user} n'est pas dans la liste des bans")
 
 @bot.command()
 @commands.has_role('admin')
 async def createMutedRole(ctx):
+    """permet de créer un rôle "Muted"""
     mutedRole = await ctx.guild.create_role(name = "Muted",
                                             permissions = discord.Permissions(
                                                 send_messages = False,
@@ -439,6 +423,7 @@ async def createMutedRole(ctx):
 @bot.command()
 @commands.has_role('admin')
 async def getMutedRole(ctx):
+    """permet de voir s'il existe un rôle "Muted", et en crée un si ce n'est pas le cas"""
     roles = ctx.guild.roles
     for role in roles:
         if role.name == "Muted":
@@ -449,6 +434,7 @@ async def getMutedRole(ctx):
 @bot.command()
 @commands.has_role('admin')
 async def mute(ctx, member : discord.Member, *, reason = "Aucune raison n'a été renseigné"):
+    """permet de mute un utilisateur"""
     mutedRole = await getMutedRole(ctx)
     await member.add_roles(mutedRole, reason = reason)
     await ctx.send(f"{member.mention} a été mute !")
@@ -456,6 +442,7 @@ async def mute(ctx, member : discord.Member, *, reason = "Aucune raison n'a ét�
 @bot.command()
 @commands.has_role('admin')
 async def unmute(ctx, member : discord.Member, *, reason = "Aucune raison n'a été renseigné"):
+    """permet d'unmute un utilisateur"""
     mutedRole = await getMutedRole(ctx)
     await member.remove_roles(mutedRole, reason = reason)
     await ctx.send(f"{member.mention} a été unmute !")
@@ -463,6 +450,7 @@ async def unmute(ctx, member : discord.Member, *, reason = "Aucune raison n'a é
 
 @bot.command()
 async def get_quote(ctx):
+    """permet d'avoir une citation aléatoire venant d'un site internet"""
     response = requests.get("https://zenquotes.io/api/random")
     json_data = json.loads(response.text)
     quote = json_data[0]['q'] + " -" + json_data[0]['a']
@@ -470,14 +458,15 @@ async def get_quote(ctx):
 
 @bot.command()
 async def internet(ctx, *, search):
+    """permet de montrer une recherche internet demandée par l'utilisateur"""
     query_string = parse.urlencode({'search_query': search})
-    html_content = request.urlopen('https://www.google.com/search?q=' + query_string)
-    search_results = re.findall('https', html_content.read().decode())
-    print(search_results)
+    html_content = requests.get('https://www.google.com/search?q=' + query_string, cookies={'CONSENT': 'YES+'})
+    search_results = re.findall(r'/url\?q=http.*?"', html_content.text)
     await ctx.send(search_results[0])
 
 @bot.command()
 async def _8ball(ctx, *, question):
+    """permet au bot de répondre à l'utilisateur"""
     reponses = ['Evidemment',
                 "Je suis d'accord",
                 "Ma réponse est non",
@@ -490,8 +479,6 @@ async def _8ball(ctx, *, question):
     await ctx.send(f"Question : {question}\nAnswer : {random.choice(reponses)}")
 
 
-'''bot.add_cog(Role)'''
+bot.add_cog(Role(bot))
 
 bot.run("token")
-
-
