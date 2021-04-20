@@ -8,7 +8,7 @@ from urllib import parse, request
 import requests
 import json
 import re
-import Bot_activ
+from Bot_activ import bot
 
 
 youtube_dl.utils.bug_reports_message = lambda: ''
