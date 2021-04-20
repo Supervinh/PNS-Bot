@@ -8,7 +8,7 @@ from urllib import parse, request
 import requests
 import json
 import re
-import Bot_activ
+from Bot_activ import bot
 
 @bot.event
 async def on_command_error(ctx, error):
