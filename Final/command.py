@@ -8,7 +8,8 @@ from urllib import parse, request
 import requests
 import json
 import re
-import Bot_activ
+import cowsay_modif
+from Bot_activ import bot
 
 
 @bot.command()
@@ -305,3 +306,8 @@ async def _8ball(ctx, *, question):
                 "Mes sources me disent que non"]
     await ctx.send(f"Question : {question}\nAnswer : {random.choice(reponses)}")
 
+@bot.command()
+async def cow(ctx, *, texte):
+    res = cowsay_modif.get_output_string('cow', texte)
+    for line in res:
+        await ctx.send(line)
