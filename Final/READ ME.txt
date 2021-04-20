@@ -1,0 +1,3 @@
+Je ne possède pas cette bibliothèque python, la documentation officielle se trouve sur : https://pypi.org/project/cowsay/.
+
+J'ai tenté d'y appliquer des modifications personnelles, ce qui peut expliquer sa différence avec l'original.
