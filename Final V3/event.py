@@ -1,13 +1,5 @@
-import random
 import discord
 from discord.ext import commands
-import youtube_dl
-import asyncio
-import ffmpeg
-from urllib import parse, request
-import requests
-import json
-import re
 from Bot_activ import bot
 
 @bot.event
@@ -24,7 +16,7 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_ready():
-    game = discord.Game("Si vous avez besoin d'aide, mentionnez le bot et tapez 'help'")
+    game = discord.Game("Si vous avez besoin d'aide, tapez '!help'")
     await bot.change_presence(activity = game)
     print("Ton bot est prêt")
 
