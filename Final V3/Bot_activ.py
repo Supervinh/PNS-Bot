@@ -6,4 +6,4 @@ intents.members = True
 intents.presences = True
 intents.reactions = True
 
-bot = commands.Bot(command_prefix = commands.when_mentioned, description = "Le meilleur bot", intents=intents)
+bot = commands.Bot(command_prefix = "!", description = "Le meilleur bot", intents=intents)
