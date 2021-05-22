@@ -9,14 +9,14 @@ class Dessins(commands.Cog):
         self.bot = bot
         
     @commands.command()
-    async def cow(ctx, *, texte):
+    async def cow(self, ctx, *, texte):
         "dessine une vache"
         res = cowsay_modif.get_output_string('cow', texte)
         image = "\n".join(res)
         await ctx.send(f'``` {image} ```')
 
     @commands.command()
-    async def dragon(ctx, *, texte):
+    async def dragon(self, ctx, *, texte):
         "dessine un dragon"
         res = cowsay_modif.get_output_string('dragon', texte)
         image = "\n".join(res)
@@ -24,7 +24,7 @@ class Dessins(commands.Cog):
 
 
     @commands.command()
-    async def demon(ctx, *, texte):
+    async def demon(self, ctx, *, texte):
         "dessine un démon"
         res = cowsay_modif.get_output_string('daemon', texte)
         image = "\n".join(res)
@@ -32,20 +32,22 @@ class Dessins(commands.Cog):
 
 
     @commands.command()
-    async def cheese(ctx, *, texte):
+    async def cheese(self, ctx, *, texte):
+        "dessine un personnage ressemblant à un fromage"
         res = cowsay_modif.get_output_string('cheese', texte)
         image = "\n".join(res)
         await ctx.send(f'``` {image} ```')
 
     @commands.command()
-    async def beavis(ctx, *, texte):
+    async def beavis(self, ctx, *, texte):
+        "dessine un personnage de dessin animé américain nommé beavis"
         res = cowsay_modif.get_output_string('beavis', texte)
         image = "\n".join(res)
         await ctx.send(f'``` {image} ```')
 
 
     @commands.command()
-    async def ghost(ctx, *, texte):
+    async def ghost(self, ctx, *, texte):
         "dessine le symbole de ghostbusters"
         res = cowsay_modif.get_output_string('ghostbusters', texte)
         image = "\n".join(res)
@@ -53,7 +55,7 @@ class Dessins(commands.Cog):
 
 
     @commands.command()
-    async def kitty(ctx, *, texte):
+    async def kitty(self, ctx, *, texte):
         "dessine un félin"
         res = cowsay_modif.get_output_string('kitty', texte)
         image = "\n".join(res)
@@ -61,7 +63,7 @@ class Dessins(commands.Cog):
 
 
     @commands.command()
-    async def meow(ctx, *, texte):
+    async def meow(self, ctx, *, texte):
         "dessine un chat"
         res = cowsay_modif.get_output_string('meow', texte)
         image = "\n".join(res)
@@ -69,13 +71,14 @@ class Dessins(commands.Cog):
 
 
     @commands.command()
-    async def milk(ctx, *, texte):
+    async def milk(self, ctx, *, texte):
+        "dessine un personnage sous forme de brique de lait"
         res = cowsay_modif.get_output_string('milk', texte)
         image = "\n".join(res)
         await ctx.send(f'``` {image} ```')
 
     @commands.command()
-    async def pig(ctx, *, texte):
+    async def pig(self, ctx, *, texte):
         "dessine un cochon"
         res = cowsay_modif.get_output_string('pig', texte)
         image = "\n".join(res)
@@ -83,7 +86,7 @@ class Dessins(commands.Cog):
 
 
     @commands.command()
-    async def dino(ctx, *, texte):
+    async def dino(self,ctx, *, texte):
         "dessine un dinosaure"
         res = cowsay_modif.get_output_string('stegosaurus', texte)
         image = "\n".join(res)
@@ -91,15 +94,15 @@ class Dessins(commands.Cog):
 
 
     @commands.command()
-    async def stimpy(ctx, *, texte):
+    async def stimpy(self, ctx, *, texte):
+        "dessine un personnage de dessin animé américain nommé stimpy"
         res = cowsay_modif.get_output_string('stimpy', texte)
         image = "\n".join(res)
         await ctx.send(f'``` {image} ```')
 
 
-
     @commands.command()
-    async def trex(ctx, *, texte):
+    async def trex(self, ctx, *, texte):
         "dessine un trex"
         res = cowsay_modif.get_output_string('trex', texte)
         image = "\n".join(res)
@@ -107,21 +110,23 @@ class Dessins(commands.Cog):
 
 
     @commands.command()
-    async def turkey(ctx, *, texte):
+    async def turkey(self, ctx, *, texte):
+        "dessine une dinde"
         res = cowsay_modif.get_output_string('turkey', texte)
         image = "\n".join(res)
         await ctx.send(f'``` {image} ```')
 
 
     @commands.command()
-    async def turtle(ctx, *, texte):
+    async def turtle(self, ctx, *, texte):
         "dessine une tortue"
         res = cowsay_modif.get_output_string('turtle', texte)
         image = "\n".join(res)
         await ctx.send(f'``` {image} ```')
 
     @commands.command()
-    async def tux(ctx, *, texte):
+    async def tux(self, ctx, *, texte):
+        "dessine un pingouin"
         res = cowsay_modif.get_output_string('tux', texte)
         image = "\n".join(res)
         await ctx.send(f'``` {image} ```')
