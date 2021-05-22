@@ -1,13 +1,9 @@
-import random
 import discord
 from discord.ext import commands
 import youtube_dl
 import asyncio
 import ffmpeg
-from urllib import parse, request
 import requests
-import json
-import re
 from Bot_activ import bot
 
 
@@ -49,6 +45,65 @@ class Video:
             self.url = video["webpage_url"]
             self.stream_url = video["url"]
 
+
+@bot.command()
+async def stop(ctx):
+    """permet d'arrêter la musique et de déconnecter le bot du salon vocal"""
+    client = ctx.guild.voice_client
+    await client.disconnect()
+    musics[ctx.guild] = []
+
+@bot.command()
+async def resume(ctx):
+    """permet de relancer la musique après l'avoir mise en pause"""
+    client = ctx.guild.voice_client
+    if client.is_paused():
+        client.resume()
+
+@bot.command()
+async def pause(ctx):
+    """permet de mettre la musique en pause"""
+    client = ctx.guild.voice_client
+    if not client.is_paused():
+        client.pause()
+
+@bot.command()
+async def skip(ctx):
+    """permet de passer la musique et d'écouter la suivante"""
+    client = ctx.guild.voice_client
+    client.stop()
+
+    
+def play_song(client, queue, song):
+    source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(song.stream_url
+        , before_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"))
+
+    def next(_):
+        if len(queue) > 0:
+            new_song = queue[0]
+            del queue[0]
+            play_song(client, queue, new_song)
+        else:
+            asyncio.run_coroutine_threadsafe(client.disconnect(), bot.loop)
+
+    client.play(source, after=next)
+
+@bot.command()
+async def play(ctx, *, url):
+    """fonction permettant au bot de jouer de la musique"""
+    client = ctx.guild.voice_client
+
+    if client and client.channel:
+        video = Video(url)
+        musics[ctx.guild].append(video)
+        await ctx.send(f"Prochaine musique : {video.url}")
+    else:
+        channel = ctx.author.voice.channel
+        video = Video(url)
+        musics[ctx.guild] = []
+        client = await channel.connect()
+        await ctx.send(f"Je lance : {video.url}")
+        play_song(client, musics[ctx.guild], video)
 
 class Role(commands.Cog):
     def __init__(self, bot, *args, **kwargs):
