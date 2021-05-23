@@ -89,7 +89,7 @@ class Utilitaires(commands.Cog):
         await ctx.send(f"{user} à été ban pour la raison suivante : {reason}.")
 
     @commands.command()
-    @commands.has_role('admin')
+    @commands.has_permissions(ban_members = True)
     async def unban(self, ctx, *, user):
         """permet de unban un utilisateur si l'on a les permissions pour"""
         userName, userId = user.split("#")
