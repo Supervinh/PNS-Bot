@@ -7,46 +7,46 @@ Les fonctions codées peuvent être séparées en 2 parties, celles qui se décl
 
 ## Fonctions évènements
 
-1.	Event : on_ready
+### 1.	Event : on_ready
 Son but est simplement de changer l’activité du Bot sur discord. Une fois activé le Bot « joue à Si vous avez besoin d’aide, tapez ’!help’ ». De plus, une fois le Bot prêt, le message "Ton bot est prêt" est affiché dans la console.
 
-2.	Event : on_command_error
+### 2.	Event : on_command_error
 Le but de cet event va être d’envoyer un message d’erreur dans un chat si une commande n’existe pas, si elle a mal été appelée (par exemple s’il manque un argument), si un utilisateur n’a pas les droits sur une action ou si l’utilisateur ne possède pas le rôle permettant d’utiliser la commande.
 
-3.	Event : on_member_join
+### 3.	Event : on_member_join
 A chaque nouvel utilisateur sur le serveur, le Bot renverra 'Salut NomUtilisateur, je te souhaite la bienvenue sur le serveur !' avec une image en privé au nouvel utilisateur.
 
-4.	Event : on_member_update
+### 4.	Event : on_member_update
 Cette fonction notifie quand un membre agit sur son profil dans le serveur. Si un membre du serveur change son statut, son surnom ou son activité, un message correspondant sera envoyé sur un salon textuel prédéfini (il suffit de copier l’identifiant du salon et de le coller dans la variable channel de l’event).
 
-5.	Event : on_user_update
+### 5.	Event : on_user_update
 Il agit de la même manière que le précédant mais cette fois pour son avatar, son pseudo ou son numéro d’identification (il faudra de la même façon copier l’identifiant du salon où l’on souhaite recevoir les messages).
 
-6.	Event : on_message_delete
+### 6.	Event : on_message_delete
 Cet événement notifie quand un message d’un channel est effacé en citant le message et le nom de l’utilisateur ayant envoyé le message (il faudra également spécifier le salon textuel où recevoir les messages).
 
-7.	Event : on_message_edit
+### 7.	Event : on_message_edit
 Cet event notifie quand le message d’un channel est modifié en affichant l’utilisateur qui a modifié son message, ainsi que le message avant et après modification (il faudra également spécifier un salon pour recevoir les messages).
 
 Le seul soucis étant que, de la façon dont nous l'avons codé, le salon dans lequel le bot envoie les notifications doit être codé en dur.
 
 ## Commandes
 
-1.	Morpion :
+### 1.	Morpion :
 La première chose que nous avons fait est d’importer une bibliothèque appelée random.
 Afin de commencer la partie, l’utilisateur doit utiliser la commande !morpion et se mentionner lui-même ainsi que l’autre membre du serveur avec qui il veut jouer. La partie se lance et désigne aléatoirement un des deux joueurs pour commencer. Le premier joueur doit ainsi utiliser la commande !place et choisir un chiffre entre 1 et 9 afin de jouer. Vient ensuite le tour du deuxième qui doit réitérer l’action, et ce jusqu’à que la grille soit remplie ou que l’un des 2 joueurs gagne. Le code a été fait de sorte qu’on ne puisse lancer d’autre partie tant que la première n’est pas terminée, et que chaque joueur soit obligé de respecter l’ordre des tours.
 
-2.	Dessins :
+### 2.	Dessins :
 Afin de réaliser les différentes fonctions de ce fichier dessins.py, nous sommes partis d’une bibliothèque nommée cowsay.py, que l’on a légèrement modifié afin de satisfaire nos exigences. Les différentes commandes de ce fichier permettent au bot d’envoyer un “dessin“ prédéfini avec un message fourni par l’utilisateur. Par exemple :
 
  
 L’utilisateur a le choix entre différents dessins qu’il aura le loisir de voir en utilisant la commande !help, ou en regardant directement dans le code.
 
-3.	Gifs :
+### 3.	Gifs :
 Afin d’utiliser ces fonctions l’utilisateur devra installer les bibliothèques requests, random et giphy_client et obtenir une clé API tenor et giphy et les recopier dans les variables APItenor et giphy_token du fichier gif.py.
 Les personnes sur le serveur discord auront la possibilité de choisir entre tenor et gif pour leur recherche de gif. Les utilisateurs auront simplement à taper la commande !tenor ou !giphy suivi des termes de recherche voulus, afin que le bot renvoie un gif correspondant à cette recherche.
 
-4.	Utilitaires :
+### 4.	Utilitaires :
 Dans cette catégorie de fonction se trouvent des commandes afin de gérer ou, du moins, obtenir des informations sur le serveur ou ses membres.
 
 a)	InfoServeur :
@@ -73,7 +73,8 @@ f)	Mute :
 Afin d’utiliser les commandes suivantes, l’utilisateur devra avoir un rôle avec le nom “admin“ (peut également être modifié comme précédemment). L’utilisateur doit commencer par créer un rôle Muted, pour se faire, il a le choix entre 2 fonctions : createMutedRole et getMutedRole. La seconde est préférable à la première car elle va d’abord chercher si un tel rôle existe déjà sur le serveur et si ce n’est pas le cas, elle fera appel à la première pour le créer, alors que la première créera le rôle même s’il existe déjà, ce qui provoquera des doublons. L’utilisateur peut ensuite utiliser les commandes mute et unmute (en pouvant, s’il le souhaite, indiquer une raison) sur un membre du serveur afin de lui ajouter ou retirer le rôle Muted.
 
 
-5.	Fun :
+### 5.	Fun :
+
 a)	Mot spécifique :
 
 L’utilisateur peut modifier la fonction NARUTO du fichier commands.py afin que le bot réponde à un mot spécifique de son choix, par un autre mot spécifique.
@@ -125,5 +126,3 @@ Les membres du serveur ont la possibilité d’écouter de la musique dans un sa
 ### Rôles :
 
 Dans le fichier classe.py, l’utilisateur à la possibilité de désigner un message (grâce à son identifiant) ainsi que des émojis particuliers afin que les membres puissent réagir avec ces derniers et obtenir (ou retirer) des rôles associés à ces émojis (grâce à leurs identifiants également).
-
-
